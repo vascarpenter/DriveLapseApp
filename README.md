@@ -1,6 +1,7 @@
 # DriveLapseApp
 
-![image](https://github.com/vascarpenter/DriveLapseApp/ss.jpg)
+<img src="https://github.com/vascarpenter/DriveLapseApp/blob/main/ss.jpg" width="50%" />
+
 https://github.com/vascarpenter/DriveLapseApp
 
 - Androidでサーバに立てたapiへaccessして通過時刻を記録しよう
