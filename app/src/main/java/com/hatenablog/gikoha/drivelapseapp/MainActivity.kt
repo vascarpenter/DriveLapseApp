@@ -1,5 +1,6 @@
 package com.hatenablog.gikoha.drivelapseapp
 
+import android.app.Activity
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -15,6 +16,7 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
@@ -52,6 +54,11 @@ fun MainScreen(routes: Array<String>)
 
     val viewState: DriveLapseViewState by viewModel.state.collectAsState(initial = DriveLapseViewState.EMPTY)
     val items: List<DriveLapse> = viewState.items ?: emptyList()
+
+    val showDialog by viewModel.showDialog.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
+    val activity = (LocalContext.current as? Activity)
+
     if (items.isEmpty())
     {
         viewModel.loadData {
@@ -75,6 +82,23 @@ fun MainScreen(routes: Array<String>)
 
     }
 
+    if(showDialog)
+    {
+        AlertDialog(
+            onDismissRequest = { },
+            title = {
+                Text("Error " + errorMessage)
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.closeAlert()
+                    activity?.finishAndRemoveTask()
+                }) {
+                    Text("Exit")
+                }
+            }
+        )
+    }
 }
 
 class OneLineParameterProvider : PreviewParameterProvider<DriveLapse>

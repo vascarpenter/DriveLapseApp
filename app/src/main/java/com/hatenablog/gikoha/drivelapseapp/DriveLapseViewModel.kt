@@ -7,9 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
@@ -22,6 +20,21 @@ class DriveLapseViewModel @Inject constructor() : ViewModel()
 {
     private val _buttontitle = MutableLiveData("SUBMIT")
     val buttontitle: LiveData<String> = _buttontitle
+    val errorMessage = MutableStateFlow("")
+
+    private val _showDialog = MutableStateFlow(false)
+    val showDialog: StateFlow<Boolean> = _showDialog.asStateFlow()
+
+    fun openAlert()
+    {
+        _showDialog.value = true
+    }
+
+    fun closeAlert()
+    {
+        _showDialog.value = false
+        // Continue with executing the confirmed action
+    }
 
     private val _items = MutableStateFlow<List<DriveLapse>?>(null)
     val state = _items.map {
@@ -45,41 +58,72 @@ class DriveLapseViewModel @Inject constructor() : ViewModel()
         // repo access is suspended function, so run in CoroutineScope
 
         viewModelScope.launch {
-            val response = getapi.getItems()
-            if (response.isSuccessful)
+            try
             {
-                // success
-                val data = response.body()!!
-                _items.update { data.toList() }
-                callback()
+
+                val response = getapi.getItems()
+                if (response.isSuccessful)
+                {
+                    // success
+                    val data = response.body()!!
+                    _items.update { data.toList() }
+                    callback()
+                }
+                else
+                {
+                    errorMessage.value = response.errorBody().toString()
+                    openAlert()
+                }
+            }
+            catch (e: Exception)
+            {
+                errorMessage.value = "connect error " + e.message ?: ""
+                openAlert()
             }
         }
 
     }
 
-    fun postData(direction: String,
-                 depTime: String,
-                 p1Time: String,
-                 p2Time: String,
-                 p3Time: String,
-                 arrTime: String,
-                 route: String,
-                 callback: () -> Unit)
+    fun postData(
+            direction: String,
+            depTime: String,
+            p1Time: String,
+            p2Time: String,
+            p3Time: String,
+            arrTime: String,
+            route: String,
+            callback: () -> Unit
+    )
     {
         val postapi = apiBuilder().create(DriveLapsePost::class.java)
 
-        val d = DriveLapsePostJson(BuildConfig.driveapikey, direction, depTime,
-                                   p1Time, p2Time, p3Time,arrTime, route,"晴れ")
+        val d = DriveLapsePostJson(
+            BuildConfig.driveapikey, direction, depTime,
+            p1Time, p2Time, p3Time, arrTime, route, "晴れ"
+        )
 
         viewModelScope.launch {
-
-            // repo access is suspended function, so run in CoroutineScope
-            val response = postapi.postItem(d)
-            if (response.isSuccessful)
+            try
             {
-                // success
-                callback()
+                // repo access is suspended function, so run in CoroutineScope
+                val response = postapi.postItem(d)
+                if (response.isSuccessful)
+                {
+                    // success
+                    callback()
+                }
+                else
+                {
+                    errorMessage.value = response.errorBody().toString()
+                    openAlert()
+                }
             }
+            catch (e: Exception)
+            {
+                errorMessage.value = "connect error " + e.message ?: ""
+                openAlert()
+            }
+
         }
     }
 
