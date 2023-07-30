@@ -40,3 +40,5 @@ driveapikey=ACCESSKEY
   - gradle.propertiesでの指定では必ず文字化けして使い物にならなかった
 
 - kotlin ソース内で参照してます
+- https アクセスがネームサーバーの問題でできなくなったので　http接続でAPIアクセスするようにした
+  (AndroidManifest.xml と xml/network_security_config.xml を変更)
